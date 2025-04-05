@@ -10,6 +10,7 @@ import EditSchedule from "@/pages/edit-schedule";
 import GenerateSchedule from "@/pages/generate-schedule";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
+import { WebSocketProvider } from "@/hooks/use-websocket";
 import AppShell from "@/components/layout/app-shell";
 
 function Router() {
@@ -22,7 +23,7 @@ function Router() {
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/schedule/generate" component={GenerateSchedule} />
       <ProtectedRoute path="/schedule/edit/:id">
-        {params => <EditSchedule scheduleId={parseInt(params.id)} />}
+        {(params: Record<string, string>) => <EditSchedule scheduleId={parseInt(params.id)} />}
       </ProtectedRoute>
       <Route component={NotFound} />
     </Switch>
@@ -33,10 +34,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppShell>
-          <Router />
-        </AppShell>
-        <Toaster />
+        <WebSocketProvider>
+          <AppShell>
+            <Router />
+          </AppShell>
+          <Toaster />
+        </WebSocketProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

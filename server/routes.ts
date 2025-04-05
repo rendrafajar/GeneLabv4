@@ -16,7 +16,7 @@ import {
   geneticParamsSchema
 } from "@shared/schema";
 import { GeneticAlgorithm } from "./genetic-algorithm";
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 
 // Middleware to check if user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: Function) => {
@@ -38,8 +38,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
   const httpServer = createServer(app);
   
-  // Create WebSocket server for real-time updates
-  const wss = new WebSocketServer({ server: httpServer });
+  // Create WebSocket server for real-time updates with specific path
+  // to avoid conflict with Vite's HMR WebSocket
+  const wss = new WebSocketServer({ 
+    server: httpServer,
+    path: '/ws'
+  });
   
   // Set up WebSocket connections
   setupWebSockets(wss);
@@ -721,7 +725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const schedule = await storage.createSchedule({
         ...parsedData.data,
-        createdBy: req.user.id
+        createdBy: req.user?.id || 0 // Fallback to 0 if user is not defined
       });
       
       res.status(201).json(schedule);
@@ -871,7 +875,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const timeSlots = await storage.getTimeSlots();
       
       // Get curriculum for these classes
-      const departmentIds = [...new Set(classes.map(c => c.departmentId))];
+      const departmentIdsMap: Record<string, boolean> = {};
+      classes.forEach(c => departmentIdsMap[c.departmentId.toString()] = true);
+      const departmentIds = Object.keys(departmentIdsMap).map(id => parseInt(id));
       const curriculum = await storage.getCurriculum({ 
         academicYear: schedule.academicYear,
       });
@@ -922,7 +928,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const interval = setInterval(async () => {
         const progress = ga.getProgress();
         wss.clients.forEach(client => {
-          if (client.readyState === 1) {
+          if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({
               type: 'scheduleGenerationProgress',
               data: {
@@ -955,7 +961,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Notify clients
           wss.clients.forEach(client => {
-            if (client.readyState === 1) {
+            if (client.readyState === WebSocket.OPEN) {
               client.send(JSON.stringify({
                 type: 'scheduleGenerationComplete',
                 data: {
@@ -993,6 +999,15 @@ function setupWebSockets(wss: WebSocketServer) {
       type: 'connection',
       data: { message: 'Connected to Genelab v4 WebSocket server' }
     }));
+    
+    // Check connection status with a ping-pong mechanism
+    const interval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ping' }));
+      } else {
+        clearInterval(interval);
+      }
+    }, 30000);
     
     ws.on('message', (message) => {
       try {

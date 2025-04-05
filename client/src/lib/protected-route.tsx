@@ -4,10 +4,11 @@ import { Redirect, Route } from "wouter";
 
 type ProtectedRouteProps = {
   path: string;
-  component: React.ComponentType<any>;
+  component?: React.ComponentType<any>;
+  children?: (params: Record<string, string>) => React.ReactNode;
 };
 
-export function ProtectedRoute({ path, component: Component }: ProtectedRouteProps) {
+export function ProtectedRoute({ path, component: Component, children }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
@@ -28,5 +29,9 @@ export function ProtectedRoute({ path, component: Component }: ProtectedRoutePro
     );
   }
 
-  return <Route path={path} component={Component} />;
+  if (Component) {
+    return <Route path={path} component={Component} />;
+  }
+
+  return <Route path={path}>{children}</Route>;
 }
