@@ -63,23 +63,9 @@ const TimeSlotsPage: React.FC = () => {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
   const [filterDay, setFilterDay] = useState<string>('all');
   
-  // Fetch timeslots with filters
+  // Fetch timeslots
   const { data: timeSlots, isLoading } = useQuery<TimeSlot[]>({
-    queryKey: ['/api/timeslots', filterDay],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      
-      if (filterDay !== 'all') {
-        params.append('dayOfWeek', filterDay);
-      }
-      
-      const response = await fetch(`/api/timeslots?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error('Gagal memuat data slot waktu');
-      }
-      
-      return await response.json();
-    },
+    queryKey: ['/api/timeslots'],
   });
   
   // Delete timeslot mutation

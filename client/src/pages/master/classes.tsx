@@ -68,31 +68,12 @@ const ClassesPage: React.FC = () => {
   
   // Fetch classes with filters
   const { data: classes, isLoading } = useQuery<Class[]>({
-    queryKey: ['/api/classes', filterDepartmentId, filterAcademicYear, filterActive, searchQuery],
+    queryKey: ['/api/classes'],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      
-      if (filterDepartmentId) {
-        params.append('departmentId', filterDepartmentId);
-      }
-      
-      if (filterAcademicYear) {
-        params.append('academicYear', filterAcademicYear);
-      }
-      
-      if (filterActive !== 'all') {
-        params.append('isActive', filterActive === 'active' ? 'true' : 'false');
-      }
-      
-      if (searchQuery) {
-        params.append('search', searchQuery);
-      }
-      
-      const response = await fetch(`/api/classes?${params.toString()}`);
+      const response = await fetch('/api/classes');
       if (!response.ok) {
         throw new Error('Gagal memuat data kelas');
       }
-      
       return await response.json();
     },
   });

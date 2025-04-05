@@ -235,33 +235,34 @@ export const exportToPDF = (
   viewType: 'class' | 'teacher' | 'room' = 'class',
   id?: number
 ) => {
-  const doc = new jsPDF('landscape');
-  
-  // Add title
-  doc.setFontSize(18);
-  doc.text(title, 14, 22);
-  
-  // Filter data based on view type and ID
-  let filteredDetails = [...scheduleDetails];
-  let subtitle = 'Jadwal Lengkap';
-  
-  if (viewType === 'class' && id) {
-    filteredDetails = scheduleDetails.filter(detail => detail.classId === id);
-    const className = filteredDetails[0]?.class?.name || `Kelas ${id}`;
-    subtitle = `Jadwal Kelas: ${className}`;
-  } else if (viewType === 'teacher' && id) {
-    filteredDetails = scheduleDetails.filter(detail => detail.teacherId === id);
-    const teacherName = filteredDetails[0]?.teacher?.name || `Guru ${id}`;
-    subtitle = `Jadwal Guru: ${teacherName}`;
-  } else if (viewType === 'room' && id) {
-    filteredDetails = scheduleDetails.filter(detail => detail.roomId === id);
-    const roomName = filteredDetails[0]?.room?.name || `Ruang ${id}`;
-    subtitle = `Jadwal Ruangan: ${roomName}`;
-  }
-  
-  // Add subtitle
-  doc.setFontSize(14);
-  doc.text(subtitle, 14, 30);
+  try {
+    const doc = new jsPDF('landscape');
+    
+    // Add title
+    doc.setFontSize(18);
+    doc.text(title, 14, 22);
+    
+    // Filter data based on view type and ID
+    let filteredDetails = [...scheduleDetails];
+    let subtitle = 'Jadwal Lengkap';
+    
+    if (viewType === 'class' && id) {
+      filteredDetails = scheduleDetails.filter(detail => detail.classId === id);
+      const className = filteredDetails[0]?.class?.name || `Kelas ${id}`;
+      subtitle = `Jadwal Kelas: ${className}`;
+    } else if (viewType === 'teacher' && id) {
+      filteredDetails = scheduleDetails.filter(detail => detail.teacherId === id);
+      const teacherName = filteredDetails[0]?.teacher?.name || `Guru ${id}`;
+      subtitle = `Jadwal Guru: ${teacherName}`;
+    } else if (viewType === 'room' && id) {
+      filteredDetails = scheduleDetails.filter(detail => detail.roomId === id);
+      const roomName = filteredDetails[0]?.room?.name || `Ruang ${id}`;
+      subtitle = `Jadwal Ruangan: ${roomName}`;
+    }
+    
+    // Add subtitle
+    doc.setFontSize(14);
+    doc.text(subtitle, 14, 30);
   
   // Group time slots by day
   const timeSlotsByDay = timeSlots.reduce((acc, slot) => {
@@ -365,6 +366,11 @@ export const exportToPDF = (
   
   // Save PDF
   doc.save(`${title.replace(/\s+/g, '_')}_${subtitle.replace(/\s+/g, '_')}.pdf`);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    // Create fallback alert
+    alert('Terjadi kesalahan saat membuat PDF. Silahkan coba lagi nanti.');
+  }
 };
 
 // Print schedule

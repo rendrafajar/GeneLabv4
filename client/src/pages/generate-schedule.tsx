@@ -204,7 +204,8 @@ const GenerateSchedule = () => {
               title: "Generasi jadwal selesai",
               description: "Jadwal berhasil digenerate dan siap digunakan",
             });
-            navigate("/");
+            // Navigate to view schedule page with the newly created schedule
+            navigate(`/schedule/view/${scheduleId}`);
           }, 1000);
         }
       }
