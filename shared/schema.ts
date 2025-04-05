@@ -79,6 +79,7 @@ export const rooms = pgTable("rooms", {
   capacity: integer("capacity").notNull(),
   departmentId: integer("department_id").references(() => departments.id), // Optional: specific department
   isActive: boolean("is_active").notNull().default(true),
+  description: text("description"),
 });
 
 // Time slots table
