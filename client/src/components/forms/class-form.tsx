@@ -60,6 +60,12 @@ const ClassForm: React.FC<ClassFormProps> = ({
 
   const { data: departments, isLoading: isLoadingDepartments } = useQuery<Department[]>({
     queryKey: ['/api/departments'],
+    onSuccess: (data) => {
+      console.log('Departments loaded:', data);
+    },
+    onError: (error) => {
+      console.error('Error loading departments:', error);
+    },
   });
 
   const gradeLevelOptions = [
@@ -72,6 +78,20 @@ const ClassForm: React.FC<ClassFormProps> = ({
 
   const onSubmit = async (data: FormValues) => {
     try {
+      console.log('Form submission data:', data);
+      console.log('Department ID value:', data.departmentId, 
+                 'Type:', typeof data.departmentId,
+                 'Is valid:', !(!data.departmentId || isNaN(data.departmentId) || data.departmentId < 1));
+      
+      // Validasi manual untuk departmentId
+      if (!data.departmentId || isNaN(data.departmentId) || data.departmentId < 1) {
+        form.setError('departmentId', { 
+          type: 'manual', 
+          message: 'Silakan pilih jurusan' 
+        });
+        return onError('Silakan pilih jurusan');
+      }
+      
       if (isEditMode) {
         await apiRequest('PUT', `/api/classes/${classId}`, data);
       } else {
@@ -82,6 +102,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
       form.reset();
       onSuccess();
     } catch (error) {
+      console.error('Form submission error:', error);
       onError(error instanceof Error ? error.message : 'Terjadi kesalahan');
     }
   };
@@ -89,6 +110,16 @@ const ClassForm: React.FC<ClassFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {Object.keys(form.formState.errors).length > 0 && (
+          <div className="p-3 rounded-md bg-destructive/15 text-destructive text-sm mb-4">
+            <p className="font-semibold">Form memiliki kesalahan berikut:</p>
+            <ul className="list-disc pl-5 mt-1">
+              {Object.entries(form.formState.errors).map(([field, error]) => (
+                <li key={field}>{error?.message}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         <FormField
           control={form.control}
           name="name"

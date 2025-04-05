@@ -180,6 +180,7 @@ const ClassesPage: React.FC = () => {
   };
 
   const handleFormError = (message: string) => {
+    console.error('Form error in classes page:', message);
     toast({
       title: 'Gagal Menyimpan Data',
       description: message,
@@ -400,7 +401,14 @@ const ClassesPage: React.FC = () => {
             <ClassForm
               onSuccess={handleEditSuccess}
               onError={handleFormError}
-              defaultValues={selectedClass}
+              defaultValues={{
+                id: selectedClass.id,
+                name: selectedClass.name,
+                gradeLevel: selectedClass.gradeLevel,
+                departmentId: selectedClass.departmentId ? selectedClass.departmentId : undefined,
+                academicYear: selectedClass.academicYear,
+                isActive: selectedClass.isActive
+              }}
               classId={selectedClass.id}
             />
           )}
