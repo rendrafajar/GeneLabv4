@@ -43,7 +43,8 @@ export const getQueryFn: <T>(options: {
         ? `${baseUrl}/${pathSegments.join('/')}` 
         : baseUrl;
     } else {
-      url = queryKey as string;
+      // Not expected to reach here - all queries should use array format
+      url = String(queryKey);
     }
     
     const res = await fetch(url, {

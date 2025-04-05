@@ -56,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Login berhasil",
         description: `Selamat datang, ${user.name || user.username}!`,
+        variant: 'success' as any,
       });
     },
     onError: (error: Error) => {
@@ -80,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Registrasi berhasil",
         description: `Selamat datang, ${user.name || user.username}!`,
+        variant: 'success' as any,
       });
     },
     onError: (error: Error) => {
@@ -100,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Logout berhasil",
         description: "Anda telah keluar dari sistem",
+        variant: 'success' as any,
       });
     },
     onError: (error: Error) => {

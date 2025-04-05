@@ -44,7 +44,7 @@ const TemplateManagementPage: React.FC<TemplatePageProps> = ({
       toast({
         title: 'Berhasil',
         description: 'Data berhasil dihapus',
-        variant: 'success',
+        variant: 'success' as any,
       });
       queryClient.invalidateQueries({ queryKey: [queryKey] });
     },
@@ -89,7 +89,7 @@ const TemplateManagementPage: React.FC<TemplatePageProps> = ({
                   toast({
                     title: 'Berhasil',
                     description: 'Data berhasil ditambahkan',
-                    variant: 'success',
+                    variant: 'success' as any,
                   });
                 }}
                 onError={(message: string) => {
