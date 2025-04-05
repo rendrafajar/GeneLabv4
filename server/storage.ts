@@ -127,6 +127,7 @@ export interface IStorage {
   
   // Schedule details methods
   getScheduleDetails(scheduleId: number): Promise<ScheduleDetail[]>;
+  getScheduleDetail(id: number): Promise<ScheduleDetail | undefined>;
   createScheduleDetail(detail: InsertScheduleDetail): Promise<ScheduleDetail>;
   updateScheduleDetail(id: number, detail: Partial<InsertScheduleDetail>): Promise<ScheduleDetail | undefined>;
   deleteScheduleDetail(id: number): Promise<boolean>;
@@ -517,6 +518,11 @@ export class DatabaseStorage implements IStorage {
   async getScheduleDetails(scheduleId: number): Promise<ScheduleDetail[]> {
     return await db.select().from(scheduleDetails)
       .where(eq(scheduleDetails.scheduleId, scheduleId));
+  }
+  
+  async getScheduleDetail(id: number): Promise<ScheduleDetail | undefined> {
+    const [detail] = await db.select().from(scheduleDetails).where(eq(scheduleDetails.id, id));
+    return detail;
   }
 
   async createScheduleDetail(detailData: InsertScheduleDetail): Promise<ScheduleDetail> {

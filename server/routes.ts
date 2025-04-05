@@ -844,6 +844,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Alias endpoint for compatibility with frontend
+  app.get("/api/schedule-conflicts/:scheduleId", async (req, res, next) => {
+    try {
+      const scheduleId = parseInt(req.params.scheduleId);
+      const conflicts = await storage.getScheduleConflicts(scheduleId);
+      res.json(conflicts);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Alias endpoint for compatibility with frontend
+  app.get("/api/schedule-details/:scheduleId", async (req, res, next) => {
+    try {
+      const scheduleId = parseInt(req.params.scheduleId);
+      const details = await storage.getScheduleDetails(scheduleId);
+      
+      // Enhance details with related data
+      const enhancedDetails = await Promise.all(details.map(async (detail) => {
+        const [teacher, room, timeSlot, class_, subject] = await Promise.all([
+          storage.getTeacher(detail.teacherId),
+          storage.getRoom(detail.roomId),
+          storage.getTimeSlot(detail.timeSlotId),
+          storage.getClass(detail.classId),
+          storage.getSubject(detail.subjectId)
+        ]);
+        
+        return {
+          ...detail,
+          teacher,
+          room,
+          timeSlot,
+          class: class_,
+          subject
+        };
+      }));
+      
+      res.json(enhancedDetails);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Endpoint for resolving conflicts
+  app.put("/api/schedule-details/:id/resolve-conflict", ensureAdmin, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { action, newValue } = req.body;
+      
+      if (!action || !['changeRoom', 'changeTime', 'changeTeacher', 'removeLesson'].includes(action)) {
+        return res.status(400).json({ message: "Action tidak valid" });
+      }
+      
+      // Get the original detail
+      const originalDetail = await storage.getScheduleDetail(id);
+      if (!originalDetail) {
+        return res.status(404).json({ message: "Detail jadwal tidak ditemukan" });
+      }
+      
+      let updatedDetail;
+      
+      if (action === 'removeLesson') {
+        // Delete the lesson
+        const success = await storage.deleteScheduleDetail(id);
+        if (!success) {
+          return res.status(404).json({ message: "Gagal menghapus detail jadwal" });
+        }
+        return res.status(204).send();
+      } else {
+        // Update based on action type
+        const updateData: any = { isManuallyEdited: true };
+        
+        switch (action) {
+          case 'changeRoom':
+            updateData.roomId = newValue;
+            break;
+          case 'changeTime':
+            updateData.timeSlotId = newValue;
+            break;
+          case 'changeTeacher':
+            updateData.teacherId = newValue;
+            break;
+        }
+        
+        updatedDetail = await storage.updateScheduleDetail(id, updateData);
+        
+        if (!updatedDetail) {
+          return res.status(404).json({ message: "Gagal memperbarui detail jadwal" });
+        }
+      }
+      
+      res.json(updatedDetail);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
   // Generate Schedule using genetic algorithm
   app.post("/api/schedules/:id/generate", ensureAdmin, async (req, res, next) => {
     try {
