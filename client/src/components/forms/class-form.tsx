@@ -21,6 +21,15 @@ const formSchema = insertClassSchema.extend({
   }).min(1, 'Silahkan pilih jurusan'),
   academicYear: z.string().min(4, 'Tahun ajaran harus diisi').regex(/^\d{4}-\d{4}$/, 'Format tahun ajaran: YYYY-YYYY'),
   isActive: z.boolean().default(true),
+}).superRefine((data, ctx) => {
+  // Tambahan validasi untuk memastikan departmentId ada
+  if (!data.departmentId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Silahkan pilih jurusan",
+      path: ["departmentId"]
+    });
+  }
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -38,7 +47,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
   defaultValues = {
     name: '',
     gradeLevel: 10,
-    departmentId: 0,
+    departmentId: undefined, // defaultValues biarkan undefined untuk handle validasi
     academicYear: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
     isActive: true,
   },

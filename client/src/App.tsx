@@ -21,6 +21,7 @@ import DepartmentsPage from "@/pages/master/departments";
 import RoomsPage from "@/pages/master/rooms";
 import TimeSlotsPage from "@/pages/master/timeslots";
 import SubjectsPage from "@/pages/master/subjects";
+import SubjectCurriculumPage from "@/pages/master/subject-curriculum-management";
 
 // Report Pages
 import TeacherWorkloadPage from "@/pages/reports/teacher-workload";
@@ -50,6 +51,7 @@ function Router() {
       <ProtectedRoute path="/rooms" component={RoomsPage} />
       <ProtectedRoute path="/timeslots" component={TimeSlotsPage} />
       <ProtectedRoute path="/subjects" component={SubjectsPage} />
+      <ProtectedRoute path="/subjects-and-curriculum" component={SubjectCurriculumPage} />
       
       {/* Protected Routes - Schedule Management */}
       <ProtectedRoute path="/schedule/generate" component={GenerateSchedule} />
