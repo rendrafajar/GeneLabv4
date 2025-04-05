@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Book, Plus, Pencil, Trash2, MoreHorizontal, Search, Beaker } from 'lucide-react';
+import { 
+  BookOpen, 
+  Plus, 
+  Pencil, 
+  Trash2, 
+  MoreHorizontal, 
+  Search, 
+  GraduationCap,
+  Filter 
+} from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Subject, Department } from '@shared/schema';
 import { queryClient } from '@/lib/queryClient';
@@ -25,6 +34,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -48,21 +58,35 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import SubjectForm from '@/components/forms/subject-form';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// Extended subject type with department relationship and fixed types
+interface SubjectWithDepartment {
+  id: number;
+  name: string;
+  code: string;
+  gradeLevel: number;
+  departmentId: number | null;
+  description: string | null;
+  roomType: 'teori' | 'praktikum';
+  isCompulsory: boolean;
+  department?: Department;
+}
 
 const SubjectsPage: React.FC = () => {
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<SubjectWithDepartment | null>(null);
   const [filterDepartment, setFilterDepartment] = useState<string>('all');
   const [filterGradeLevel, setFilterGradeLevel] = useState<string>('all');
-  const [filterRoomType, setFilterRoomType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [activeTab, setActiveTab] = useState('all');
   
   // Fetch subjects with filters
-  const { data: subjects, isLoading } = useQuery<Subject[]>({
-    queryKey: ['/api/subjects', filterDepartment, filterGradeLevel, filterRoomType, searchQuery],
+  const { data: subjects, isLoading } = useQuery<SubjectWithDepartment[]>({
+    queryKey: ['/api/subjects', filterDepartment, filterGradeLevel],
     queryFn: async () => {
       const params = new URLSearchParams();
       
@@ -72,14 +96,6 @@ const SubjectsPage: React.FC = () => {
       
       if (filterGradeLevel !== 'all') {
         params.append('gradeLevel', filterGradeLevel);
-      }
-      
-      if (filterRoomType !== 'all') {
-        params.append('roomType', filterRoomType);
-      }
-      
-      if (searchQuery) {
-        params.append('search', searchQuery);
       }
       
       const response = await fetch(`/api/subjects?${params.toString()}`);
@@ -128,12 +144,12 @@ const SubjectsPage: React.FC = () => {
     },
   });
 
-  const handleDelete = (subject: Subject) => {
+  const handleDelete = (subject: SubjectWithDepartment) => {
     setSelectedSubject(subject);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleEdit = (subject: Subject) => {
+  const handleEdit = (subject: SubjectWithDepartment) => {
     setSelectedSubject(subject);
     setIsEditDialogOpen(true);
   };
@@ -173,44 +189,74 @@ const SubjectsPage: React.FC = () => {
   const resetFilters = () => {
     setFilterDepartment('all');
     setFilterGradeLevel('all');
-    setFilterRoomType('all');
     setSearchQuery('');
+    setActiveTab('all');
   };
 
-  const filteredSubjects = subjects?.filter(subject => {
-    if (searchQuery) {
-      return (
-        subject.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        subject.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (subject.description && subject.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    }
-    return true;
-  });
-
-  const getDepartmentName = (departmentId: number | null) => {
-    if (!departmentId) return 'Semua Jurusan';
-    const department = departments?.find(d => d.id === departmentId);
-    return department ? department.name : '-';
-  };
-
-  const getGradeLevelName = (gradeLevel: number | null) => {
-    if (!gradeLevel) return 'Semua Tingkatan';
-    
+  // Function to get grade level name
+  const getGradeLevelName = (gradeLevel: number) => {
     switch (gradeLevel) {
       case 10: return 'X (Kelas 10)';
       case 11: return 'XI (Kelas 11)';
       case 12: return 'XII (Kelas 12)';
-      default: return 'Tidak Diketahui';
+      default: return `Kelas ${gradeLevel}`;
     }
   };
+  
+  // Filter subjects based on search query and tab
+  const filteredSubjects = subjects
+    ?.filter(subject => {
+      if (searchQuery) {
+        return (
+          subject.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          subject.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (subject.description && subject.description.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+      }
+      return true;
+    })
+    .filter(subject => {
+      // Filter based on tab
+      if (activeTab === 'all') {
+        return true;
+      } else if (activeTab === 'generic') {
+        return subject.departmentId === null || subject.departmentId === undefined;
+      } else if (activeTab === 'departmental') {
+        return subject.departmentId !== null && subject.departmentId !== undefined;
+      } else if (activeTab === 'compulsory') {
+        return subject.isCompulsory === true;
+      } else if (activeTab === 'optional') {
+        return subject.isCompulsory === false;
+      }
+      return true;
+    });
+
+  // Group subjects by grade level
+  const groupedSubjects = filteredSubjects?.reduce((acc, subject) => {
+    const gradeLevel = subject.gradeLevel;
+    if (!acc[gradeLevel]) {
+      acc[gradeLevel] = [];
+    }
+    
+    // Find department details
+    const department = departments?.find(d => d.id === subject.departmentId);
+    
+    // Add department details to subject
+    const subjectWithDepartment = {
+      ...subject,
+      department
+    };
+    
+    acc[gradeLevel].push(subjectWithDepartment);
+    return acc;
+  }, {} as Record<number, SubjectWithDepartment[]>);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Manajemen Mata Pelajaran</h1>
-          <p className="text-muted-foreground">Kelola data mata pelajaran dan jenis ruangan yang diperlukan</p>
+          <p className="text-muted-foreground">Kelola data mata pelajaran untuk kurikulum sekolah</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
@@ -233,7 +279,10 @@ const SubjectsPage: React.FC = () => {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>Filter dan Pencarian</CardTitle>
+          <CardTitle className="flex items-center">
+            <Filter className="h-5 w-5 mr-2" />
+            Filter dan Pencarian
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -265,24 +314,8 @@ const SubjectsPage: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-
+            
             <div>
-              <label className="text-sm font-medium mb-2 block">Jenis Ruangan</label>
-              <Select value={filterRoomType} onValueChange={setFilterRoomType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Semua Jenis" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Jenis</SelectItem>
-                  <SelectItem value="teori">Kelas Teori</SelectItem>
-                  <SelectItem value="praktikum">Lab/Praktikum</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-            <div className="md:col-span-2">
               <label className="text-sm font-medium mb-2 block">Jurusan</label>
               <Select value={filterDepartment} onValueChange={setFilterDepartment}>
                 <SelectTrigger>
@@ -290,6 +323,7 @@ const SubjectsPage: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Jurusan</SelectItem>
+                  <SelectItem value="null">Mata Pelajaran Umum</SelectItem>
                   {departments?.map((department) => (
                     <SelectItem key={department.id} value={department.id.toString()}>
                       {department.name}
@@ -298,103 +332,145 @@ const SubjectsPage: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="md:col-span-2 flex items-end">
-              <Button variant="outline" onClick={resetFilters} size="sm" className="ml-auto">
-                Reset Filter
-              </Button>
-            </div>
+          </div>
+          
+          <div className="flex justify-end mt-4">
+            <Button variant="outline" onClick={resetFilters} size="sm">
+              Reset Filter
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Mata Pelajaran</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
+          <TabsTrigger value="all">Semua</TabsTrigger>
+          <TabsTrigger value="generic">Umum</TabsTrigger>
+          <TabsTrigger value="departmental">Jurusan</TabsTrigger>
+          <TabsTrigger value="compulsory">Wajib</TabsTrigger>
+          <TabsTrigger value="optional">Pilihan</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value={activeTab} className="mt-6">
           {isLoading ? (
-            <div className="space-y-3">
-              {Array(5).fill(0).map((_, i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <Skeleton className="h-12 w-full" />
-                </div>
+            <div className="space-y-4">
+              {Array(3).fill(0).map((_, i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-6 w-40" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {Array(4).fill(0).map((_, j) => (
+                        <Skeleton key={j} className="h-12 w-full" />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           ) : filteredSubjects && filteredSubjects.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Kode</TableHead>
-                  <TableHead>Nama Mata Pelajaran</TableHead>
-                  <TableHead>Tingkat</TableHead>
-                  <TableHead>Jurusan</TableHead>
-                  <TableHead>Jenis Ruangan</TableHead>
-                  <TableHead className="w-[100px]">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSubjects.map((subject) => (
-                  <TableRow key={subject.id}>
-                    <TableCell className="font-medium">{subject.code}</TableCell>
-                    <TableCell>{subject.name}</TableCell>
-                    <TableCell>{getGradeLevelName(subject.gradeLevel)}</TableCell>
-                    <TableCell>{getDepartmentName(subject.departmentId)}</TableCell>
-                    <TableCell>
-                      <Badge variant={subject.roomType === 'praktikum' ? "default" : "outline"}>
-                        {subject.roomType === 'praktikum' ? (
-                          <span className="flex items-center">
-                            <Beaker className="h-3 w-3 mr-1" /> Praktikum
-                          </span>
-                        ) : (
-                          <span className="flex items-center">
-                            <Book className="h-3 w-3 mr-1" /> Teori
-                          </span>
-                        )}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Aksi</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(subject)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => handleDelete(subject)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Hapus
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="flex flex-col items-center justify-center p-8 text-center">
-              <Book className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">Belum ada data mata pelajaran</h3>
-              <p className="text-muted-foreground mb-6">
-                Anda belum memiliki data mata pelajaran. Silahkan tambahkan data mata pelajaran baru.
-              </p>
-              <Button onClick={() => setIsAddDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Tambah Mata Pelajaran
-              </Button>
+            <div className="space-y-6">
+              {groupedSubjects && Object.entries(groupedSubjects).sort((a, b) => parseInt(a[0]) - parseInt(b[0])).map(([gradeLevel, items]) => (
+                <Card key={gradeLevel}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <GraduationCap className="h-5 w-5 mr-2" />
+                      {getGradeLevelName(parseInt(gradeLevel))}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[150px]">Kode</TableHead>
+                          <TableHead>Nama Mata Pelajaran</TableHead>
+                          <TableHead>Jenis</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="w-[100px]">Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {items.map((subject) => (
+                          <TableRow key={subject.id}>
+                            <TableCell className="font-medium">{subject.code}</TableCell>
+                            <TableCell>
+                              {subject.name}
+                              {subject.description && (
+                                <div className="text-xs text-muted-foreground mt-1 max-w-xs truncate">
+                                  {subject.description}
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {subject.departmentId ? (
+                                <Badge variant="outline" className="bg-primary/10">
+                                  {subject.department?.name || 'Jurusan'}
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-secondary/10">
+                                  Umum
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {subject.isCompulsory ? (
+                                <Badge>Wajib</Badge>
+                              ) : (
+                                <Badge variant="outline">Pilihan</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Aksi</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEdit(subject)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={() => handleDelete(subject)}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Hapus
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+                <BookOpen className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Belum ada data mata pelajaran</h3>
+                <p className="text-muted-foreground mb-6">
+                  {searchQuery || filterDepartment !== 'all' || filterGradeLevel !== 'all' 
+                    ? 'Tidak ada mata pelajaran yang sesuai dengan filter yang dipilih.' 
+                    : 'Anda belum memiliki data mata pelajaran. Silahkan tambahkan data mata pelajaran baru.'}
+                </p>
+                <Button onClick={() => setIsAddDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Tambah Mata Pelajaran
+                </Button>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -407,8 +483,14 @@ const SubjectsPage: React.FC = () => {
               onSuccess={handleEditSuccess}
               onError={handleFormError}
               defaultValues={{
-                ...selectedSubject,
+                id: selectedSubject.id,
+                name: selectedSubject.name,
+                code: selectedSubject.code,
+                gradeLevel: selectedSubject.gradeLevel,
+                departmentId: selectedSubject.departmentId || undefined,
                 description: selectedSubject.description || '',
+                roomType: selectedSubject.roomType,
+                isCompulsory: selectedSubject.isCompulsory !== undefined ? selectedSubject.isCompulsory : true
               }}
               subjectId={selectedSubject.id}
             />
@@ -422,7 +504,7 @@ const SubjectsPage: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus mata pelajaran "{selectedSubject?.name}"? 
+              Apakah Anda yakin ingin menghapus mata pelajaran <strong>"{selectedSubject?.name}"</strong>? 
               Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait.
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -52,10 +52,11 @@ export const subjects = pgTable("subjects", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   code: text("code").notNull().unique(),
-  gradeLevel: integer("grade_level"), // Optional: specific grade level
+  gradeLevel: integer("grade_level").notNull(), // Specific grade level (required)
   departmentId: integer("department_id").references(() => departments.id), // Optional: specific department
   roomType: roomTypeEnum("room_type").notNull().default('teori'), // Type of room needed
   description: text("description"),
+  isCompulsory: boolean("is_compulsory").notNull().default(true), // Whether the subject is compulsory or elective
 });
 
 // Curriculum table linking subjects to grade levels and departments
