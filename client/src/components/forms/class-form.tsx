@@ -15,7 +15,10 @@ import { useQuery } from '@tanstack/react-query';
 const formSchema = insertClassSchema.extend({
   name: z.string().min(2, 'Nama kelas minimal 2 karakter'),
   gradeLevel: z.coerce.number().min(10, 'Tingkat kelas minimal 10').max(12, 'Tingkat kelas maksimal 12'),
-  departmentId: z.coerce.number().min(1, 'Silahkan pilih jurusan'),
+  departmentId: z.coerce.number({
+    required_error: "Silahkan pilih jurusan",
+    invalid_type_error: "Silahkan pilih jurusan",
+  }).min(1, 'Silahkan pilih jurusan'),
   academicYear: z.string().min(4, 'Tahun ajaran harus diisi').regex(/^\d{4}-\d{4}$/, 'Format tahun ajaran: YYYY-YYYY'),
   isActive: z.boolean().default(true),
 });
@@ -35,7 +38,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
   defaultValues = {
     name: '',
     gradeLevel: 10,
-    departmentId: undefined,
+    departmentId: 0,
     academicYear: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
     isActive: true,
   },

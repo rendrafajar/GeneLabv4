@@ -181,13 +181,16 @@ const TimeSlotsPage: React.FC = () => {
   });
 
   // Group timeslots by day
-  const timeSlotsByDay = sortedTimeSlots?.reduce<Record<number, TimeSlot[]>>((acc, timeSlot) => {
-    if (!acc[timeSlot.dayOfWeek]) {
-      acc[timeSlot.dayOfWeek] = [];
-    }
-    acc[timeSlot.dayOfWeek].push(timeSlot);
-    return acc;
-  }, {});
+  const timeSlotsByDay = React.useMemo(() => {
+    if (!sortedTimeSlots || sortedTimeSlots.length === 0) return {};
+    return sortedTimeSlots.reduce<Record<number, TimeSlot[]>>((acc, timeSlot) => {
+      if (!acc[timeSlot.dayOfWeek]) {
+        acc[timeSlot.dayOfWeek] = [];
+      }
+      acc[timeSlot.dayOfWeek].push(timeSlot);
+      return acc;
+    }, {});
+  }, [sortedTimeSlots]);
 
   // Format time for display
   const formatTime = (timeStr: string) => {

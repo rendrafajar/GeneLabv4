@@ -140,7 +140,10 @@ const TimeSlotForm: React.FC<TimeSlotFormProps> = ({
                   min="1"
                   max="10"
                   {...field}
-                  onChange={(e) => field.onChange(parseInt(e.target.value) || '')}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    field.onChange(isNaN(value) ? 1 : value);
+                  }}
                 />
               </FormControl>
               <FormDescription>
