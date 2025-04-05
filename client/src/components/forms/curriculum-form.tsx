@@ -34,7 +34,11 @@ const formSchema = insertCurriculumSchema.extend({
     required_error: "Jam per minggu harus diisi",
     invalid_type_error: "Jam per minggu harus berupa angka",
   }).min(1, "Minimal 1 jam per minggu").max(10, "Maksimal 10 jam per minggu"),
-  academicYear: z.string().min(4, "Tahun akademik harus diisi"),
+  academicYear: z.string()
+    .min(4, "Tahun akademik harus diisi")
+    .refine(val => /^\d{4}-\d{4}$/.test(val), {
+      message: 'Format tahun akademik harus dalam bentuk YYYY-YYYY, contoh: 2024-2025'
+    }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -54,7 +58,7 @@ const CurriculumForm: React.FC<CurriculumFormProps> = ({
     departmentId: undefined,
     gradeLevel: 10,
     hoursPerWeek: 2,
-    academicYear: new Date().getFullYear() + '/' + (new Date().getFullYear() + 1),
+    academicYear: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
   },
   curriculumId 
 }) => {
@@ -136,7 +140,15 @@ const CurriculumForm: React.FC<CurriculumFormProps> = ({
       form.reset();
       onSuccess();
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Terjadi kesalahan');
+      console.error('Curriculum form error:', error);
+      
+      // Cek apakah error duplikat
+      const errorMsg = error instanceof Error ? error.message : 'Terjadi kesalahan';
+      if (errorMsg.includes('duplicate key') || errorMsg.includes('unique constraint')) {
+        onError('Mata pelajaran ini sudah ada dalam kurikulum untuk jurusan, tingkat kelas, dan tahun akademik yang sama.');
+      } else {
+        onError(errorMsg);
+      }
     }
   };
 
@@ -279,8 +291,11 @@ const CurriculumForm: React.FC<CurriculumFormProps> = ({
             <FormItem>
               <FormLabel>Tahun Akademik</FormLabel>
               <FormControl>
-                <Input placeholder="Contoh: 2024/2025" {...field} />
+                <Input placeholder="Contoh: 2024-2025" {...field} />
               </FormControl>
+              <FormDescription>
+                Format tahun akademik: YYYY-YYYY (contoh: 2024-2025)
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -60,12 +60,6 @@ const ClassForm: React.FC<ClassFormProps> = ({
 
   const { data: departments, isLoading: isLoadingDepartments } = useQuery<Department[]>({
     queryKey: ['/api/departments'],
-    onSuccess: (data) => {
-      console.log('Departments loaded:', data);
-    },
-    onError: (error) => {
-      console.error('Error loading departments:', error);
-    },
   });
 
   const gradeLevelOptions = [
@@ -203,8 +197,11 @@ const ClassForm: React.FC<ClassFormProps> = ({
             <FormItem>
               <FormLabel>Tahun Ajaran</FormLabel>
               <FormControl>
-                <Input placeholder="contoh: 2023-2024" {...field} />
+                <Input placeholder="contoh: 2024-2025" {...field} />
               </FormControl>
+              <FormDescription>
+                Format tahun ajaran: YYYY-YYYY (contoh: 2024-2025)
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

@@ -131,7 +131,7 @@ const ClassesPage: React.FC = () => {
 
   // Get unique academic years for filter
   const academicYears = React.useMemo(() => {
-    if (!classes) return [];
+    if (!classes || !Array.isArray(classes)) return [];
     const years = new Set(classes.map(c => c.academicYear));
     return Array.from(years);
   }, [classes]);
