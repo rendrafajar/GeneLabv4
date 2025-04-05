@@ -24,9 +24,9 @@ import SubjectsPage from "@/pages/master/subjects";
 import SubjectCurriculumPage from "@/pages/master/subject-curriculum-management";
 
 // Report Pages
-import TeacherWorkloadPage from "@/pages/reports/teacher-workload";
-import ScheduleConflictsPage from "@/pages/reports/schedule-conflicts";
-import RoomUsagePage from "@/pages/reports/room-usage";
+import TeacherLoadReport from "@/pages/reports/teacher-load-report";
+import ConflictReport from "@/pages/reports/conflict-report";
+import RoomUsageReport from "@/pages/reports/room-usage-report";
 
 function Router() {
   return (
@@ -61,9 +61,9 @@ function Router() {
       </ProtectedRoute>
       
       {/* Protected Routes - Reports */}
-      <ProtectedRoute path="/reports/teachers" component={TeacherWorkloadPage} />
-      <ProtectedRoute path="/reports/conflicts" component={ScheduleConflictsPage} />
-      <ProtectedRoute path="/reports/rooms" component={RoomUsagePage} />
+      <ProtectedRoute path="/reports/teachers" component={TeacherLoadReport} />
+      <ProtectedRoute path="/reports/conflicts" component={ConflictReport} />
+      <ProtectedRoute path="/reports/rooms" component={RoomUsageReport} />
       
       {/* 404 Not Found */}
       <Route component={NotFound} />
