@@ -1,0 +1,61 @@
+Buatlah sebuah aplikasi sistem penjadwalan pelajaran otomatis untuk sekolah SMK. Aplikasi ini harus mampu menghasilkan jadwal pelajaran yang optimal dengan mempertimbangkan berbagai batasan dan preferensi. Gunakan algoritma genetika sebagai metode utama untuk optimasi penjadwalan.
+
+Nama Aplikasi : Genelab v4
+Author : Rendra Fajar Firmansyah
+Fitur Utama yang Dibutuhkan:
+-Aplikasi berbahasa indonesia
+-Desain UI profesional dan responsif
+-pengoperasian aplikasi yang interaktif
+
+Input Data:
+-Manajemen Kurikulum yang mengatur mata pelajaran perjenjang kelas
+-Manajemen guru dan ketersediaan guru
+-Manajemen Kelas
+-Manajemen Jurusan
+-Manajemen Ruangan (ruang teori, ruang praktikum)
+-Manajemen slot waktu
+
+Batasan:
+-Batasan waktu yang tidak tersedia untuk guru atau matapelajaran.
+-Batasan ruang kelas terhadap jurusan
+-Preferensi guru terhadap hari atau jam mengajar.
+-Preferensi mata pelajaran tertentu pada hari atau jam tertentu.
+-Jumlah hari dan jam pelajaran dalam seminggu.
+-Proses Penjadwalan dengan Algoritma Genetika:
+Representasi kromosom yang efektif untuk jadwal pelajaran.
+Fungsi fitness yang mempertimbangkan berbagai batasan (bentrok jadwal guru, bentrok jadwal kelas, kapasitas ruang, preferensi guru dan kelas jika ada).
+Operator genetika (seleksi, crossover, mutasi) yang sesuai untuk menghasilkan jadwal yang valid dan optimal.
+Parameter algoritma genetika yang dapat dikonfigurasi (ukuran populasi, jumlah generasi, probabilitas crossover dan mutasi).
+
+Output Jadwal:
+-Menampilkan jadwal pelajaran per kelas dalam format yang mudah dibaca (misalnya tabel).
+-Menampilkan jadwal mengajar per guru.
+-Menampilkan jadwal pelajaran keseluruhan
+-Kemampuan untuk mencetak dan mengekspor jadwal ke excel dan pdf.
+
+Fitur Tambahan:
+-Generate jadwal, input data, dan lihat laporan harus login sebagai admin
+-Viewer tidak perlu login untuk melihat jadwal
+-Kemampuan untuk menyimpan dan memuat jadwal.
+-Visualisasi jadwal dengan fitur drag and drop untuk edit jadwal manual.
+-Laporan statistik mengenai kualitas jadwal yang dihasilkan.
+-Laporan beban mengajar guru
+-Laporan Jadwal Bentrok
+-Laporan penggunaan ruang
+-Kemampuan untuk melakukan penjadwalan ulang sebagian jika ada perubahan data.
+
+Detail Tambahan:
+Desain Antarmuka Pengguna (UI):
+- UI menggunakan react
+- Backend menggunakan node js
+- Database menggunakan PostgreSQL
+- Gunakan desain UI yang modern, responsif, dan user friendly
+- Fitur drag and drop untuk mengedit jadwal yang telah dibuat
+- aplikasi memiliki kemampuan interaktif dalam pemakaian aplikasi
+
+generate dan Integrasikan dengan PostgreSQL database :
+host : 103.235.153.148
+username : postgres
+password : 08410100231
+database : genelabv4
+port : 5432
