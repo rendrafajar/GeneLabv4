@@ -27,13 +27,13 @@ const ViewSchedule: React.FC<ViewScheduleProps> = ({ scheduleId }) => {
 
   // If scheduleId is provided, fetch that specific schedule
   const { data: schedule, isLoading: scheduleLoading } = useQuery<Schedule>({
-    queryKey: [`/api/schedules/${scheduleId}`],
+    queryKey: ['/api/schedules', scheduleId],
     enabled: !!scheduleId,
   });
 
   // Fetch schedule details for selected schedule
   const { data: scheduleDetails, isLoading: detailsLoading } = useQuery<ScheduleDetail[]>({
-    queryKey: [`/api/schedules/${scheduleId || selectedId}/details`],
+    queryKey: ['/api/schedules', scheduleId || selectedId, 'details'],
     enabled: !!(scheduleId || selectedId),
   });
 
@@ -137,7 +137,7 @@ const ViewSchedule: React.FC<ViewScheduleProps> = ({ scheduleId }) => {
             <p className="mt-2 text-sm text-gray-500">Belum ada jadwal yang dibuat</p>
             <Button asChild className="mt-4">
               <Link href="/">
-                <a>Kembali ke Dashboard</a>
+                Kembali ke Dashboard
               </Link>
             </Button>
           </div>
