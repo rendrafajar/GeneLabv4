@@ -56,8 +56,8 @@ const ClassesPage: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
-  const [filterDepartmentId, setFilterDepartmentId] = useState<string>('');
-  const [filterAcademicYear, setFilterAcademicYear] = useState<string>('');
+  const [filterDepartmentId, setFilterDepartmentId] = useState<string>('all');
+  const [filterAcademicYear, setFilterAcademicYear] = useState<string>('all');
   const [filterActive, setFilterActive] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   
@@ -176,16 +176,38 @@ const ClassesPage: React.FC = () => {
   };
 
   const resetFilters = () => {
-    setFilterDepartmentId('');
-    setFilterAcademicYear('');
+    setFilterDepartmentId('all');
+    setFilterAcademicYear('all');
     setFilterActive('all');
     setSearchQuery('');
   };
 
   const filteredClasses = classes?.filter(classItem => {
-    if (searchQuery) {
-      return classItem.name.toLowerCase().includes(searchQuery.toLowerCase());
+    // Filter berdasarkan pencarian nama
+    if (searchQuery && !classItem.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
     }
+    
+    // Filter berdasarkan jurusan
+    if (filterDepartmentId && filterDepartmentId !== 'all' && 
+        classItem.departmentId.toString() !== filterDepartmentId) {
+      return false;
+    }
+    
+    // Filter berdasarkan tahun ajaran
+    if (filterAcademicYear && filterAcademicYear !== 'all' && 
+        classItem.academicYear !== filterAcademicYear) {
+      return false;
+    }
+    
+    // Filter berdasarkan status aktif
+    if (filterActive !== 'all') {
+      const isActiveFilter = filterActive === 'active';
+      if (classItem.isActive !== isActiveFilter) {
+        return false;
+      }
+    }
+    
     return true;
   });
 
@@ -242,7 +264,7 @@ const ClassesPage: React.FC = () => {
                   <SelectValue placeholder="Semua Jurusan" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Semua Jurusan</SelectItem>
+                  <SelectItem value="all">Semua Jurusan</SelectItem>
                   {departments?.map((department) => (
                     <SelectItem key={department.id} value={department.id.toString()}>
                       {department.name}
@@ -259,7 +281,7 @@ const ClassesPage: React.FC = () => {
                   <SelectValue placeholder="Semua Tahun" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Semua Tahun</SelectItem>
+                  <SelectItem value="all">Semua Tahun</SelectItem>
                   {academicYears.map((year) => (
                     <SelectItem key={year} value={year}>
                       {year}
